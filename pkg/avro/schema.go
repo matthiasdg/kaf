@@ -2,6 +2,7 @@ package avro
 
 import (
 	"encoding/binary"
+	"os"
 	"sync"
 
 	schemaregistry "github.com/Landoop/schema-registry"
@@ -35,6 +36,19 @@ func NewSchemaCache(url string) (*SchemaCache, error) {
 		client:           client,
 	}
 	return c, nil
+}
+
+func NewSchemaCodec(path string) (coded *goavro.Codec, err error) {
+	schemaSpec, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	codec, err := goavro.NewCodec(string(schemaSpec))
+	if err != nil {
+		return nil, err
+	}
+	return codec, nil
 }
 
 // getCodecForSchemaID returns a goavro codec for transforming data.
@@ -107,6 +121,38 @@ func (c *SchemaCache) DecodeMessage(b []byte) (message []byte, err error) {
 	message, err = codec.TextualFromNative(nil, native)
 	if err != nil {
 		return b, err
+	}
+
+	return message, nil
+}
+
+func DecodeWithCodec(b []byte, codec *goavro.Codec) (message []byte, err error) {
+	// Convert binary Avro data back to native Go form
+	native, _, err := codec.NativeFromBinary(b)
+	if err != nil {
+		return b, err
+	}
+
+	// Convert native Go form to textual Avro data
+	message, err = codec.TextualFromNative(nil, native)
+	if err != nil {
+		return b, err
+	}
+
+	return message, nil
+}
+
+func EncodeWithCodec(json []byte, codec *goavro.Codec) (message []byte, err error) {
+	// Convert textual json data to native Go form
+	native, _, err := codec.NativeFromTextual(json)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert native Go form to binary Avro data
+	message, err = codec.BinaryFromNative(nil, native)
+	if err != nil {
+		return nil, err
 	}
 
 	return message, nil

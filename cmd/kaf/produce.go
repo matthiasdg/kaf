@@ -15,6 +15,7 @@ import (
 
 	"github.com/Masterminds/sprig"
 	"github.com/Shopify/sarama"
+	"github.com/birdayz/kaf/pkg/avro"
 	"github.com/birdayz/kaf/pkg/partitioner"
 	pb "github.com/golang/protobuf/proto"
 	"github.com/spf13/cobra"
@@ -221,6 +222,12 @@ var produceCmd = &cobra.Command{
 					}
 				} else if avroSchemaID != -1 {
 					avro, err := schemaCache.EncodeMessage(avroSchemaID, data)
+					if err != nil {
+						errorExit("Failed to encode avro value", err)
+					}
+					marshaledInput = avro
+				} else if avroCodec != nil {
+					avro, err := avro.EncodeWithCodec(data, avroCodec)
 					if err != nil {
 						errorExit("Failed to encode avro value", err)
 					}

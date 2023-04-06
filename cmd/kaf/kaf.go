@@ -17,6 +17,7 @@ import (
 	"github.com/birdayz/kaf/pkg/avro"
 	"github.com/birdayz/kaf/pkg/config"
 	"github.com/birdayz/kaf/pkg/proto"
+	"github.com/linkedin/goavro/v2"
 )
 
 var cfgFile string
@@ -163,6 +164,8 @@ var (
 	decodeMsgPack     bool
 	verbose           bool
 	clusterOverride   string
+	avroSchemaPath    string
+	avroCodec         *goavro.Codec
 )
 
 func init() {
@@ -171,6 +174,7 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&schemaRegistryURL, "schema-registry", "", "URL to a Confluent schema registry. Used for attempting to decode Avro-encoded messages")
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Whether to turn on sarama logging")
 	rootCmd.PersistentFlags().StringVarP(&clusterOverride, "cluster", "c", "", "set a temporary current cluster")
+	rootCmd.PersistentFlags().StringVarP(&avroSchemaPath, "avro-schema-path", "a", "", "set a path to an avro schema file (.avsc)")
 	cobra.OnInitialize(onInit)
 }
 
@@ -215,6 +219,13 @@ func onInit() {
 
 	if verbose {
 		sarama.Logger = log.New(errWriter, "[sarama] ", log.Lshortfile|log.LstdFlags)
+	}
+	if avroSchemaPath != "" {
+		var err error
+		avroCodec, err = avro.NewSchemaCodec(avroSchemaPath)
+		if err != nil {
+			errorExit("Failed to load avro schema: %v", err)
+		}
 	}
 }
 

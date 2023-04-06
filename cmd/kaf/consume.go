@@ -385,6 +385,8 @@ func protoDecode(reg *proto.DescriptorRegistry, b []byte, _type string) ([]byte,
 func avroDecode(b []byte) ([]byte, error) {
 	if schemaCache != nil {
 		return schemaCache.DecodeMessage(b)
+	} else if avroCodec != nil {
+		return avro.DecodeWithCodec(b, avroCodec)
 	}
 	return b, nil
 }
