@@ -37,10 +37,10 @@ e.g. `schema.avsc`
   }
   ```
 consume:   
-` ./kaf -b kafka.kafka.svc.cluster.local:9092 consume topic -l 1 -a test.avsc`
-produce:
-`./kaf -b kafka.kafka.svc.cluster.local:9092 -a test.avsc produce topic`
-then e.g., type
+` ./kaf -b kafka.kafka.svc.cluster.local:9092 consume topic -l 1 -a test.avsc`   
+produce:  
+`./kaf -b kafka.kafka.svc.cluster.local:9092 -a test.avsc produce topic`  
+then e.g., type  
 `{"dlFilePath": "velo.tf_msm.datasource.20200101T0000.csv","status":"ok", "ts": 1680168047722}`, or save to file.json and `cat file.json | ./kaf command from above...`
 ## Install
 Install via Go from source:
