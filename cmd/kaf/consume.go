@@ -261,7 +261,7 @@ func handleMessage(msg *sarama.ConsumerMessage, mu *sync.Mutex) {
 		if err != nil {
 			fmt.Fprintf(&stderr, "failed to decode proto key. falling back to binary outputla. Error: %v\n", err)
 		}
-	} else {
+	} else if msg.Key != nil && len(msg.Key) > 0 { // only try avro decode key if not empty, now seems to also decode for `raw` (not so in PR #41)
 		keyToDisplay, err = avroDecode(msg.Key)
 		if err != nil {
 			fmt.Fprintf(&stderr, "could not decode Avro data: %v\n", err)
