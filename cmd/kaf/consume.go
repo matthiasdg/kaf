@@ -250,7 +250,7 @@ func handleMessage(msg *sarama.ConsumerMessage, mu *sync.Mutex) {
 			fmt.Fprintf(&stderr, "failed to decode proto. falling back to binary outputla. Error: %v\n", err)
 		}
 	} else {
-		dataToDisplay, err = avroDecode(msg.Value)
+		dataToDisplay, err = avroDecodeData(msg.Value)
 		if err != nil {
 			fmt.Fprintf(&stderr, "could not decode Avro data: %v\n", err)
 		}
@@ -261,8 +261,8 @@ func handleMessage(msg *sarama.ConsumerMessage, mu *sync.Mutex) {
 		if err != nil {
 			fmt.Fprintf(&stderr, "failed to decode proto key. falling back to binary outputla. Error: %v\n", err)
 		}
-	} else if msg.Key != nil && len(msg.Key) > 0 { // only try avro decode key if not empty, now seems to also decode for `raw` (not so in PR #41)
-		keyToDisplay, err = avroDecode(msg.Key)
+	} else { // only try avro decode key with schema registry, hence different fallthrough as for data
+		keyToDisplay, err = avroDecodeKey(msg.Key)
 		if err != nil {
 			fmt.Fprintf(&stderr, "could not decode Avro data: %v\n", err)
 		}
@@ -382,11 +382,18 @@ func protoDecode(reg *proto.DescriptorRegistry, b []byte, _type string) ([]byte,
 
 }
 
-func avroDecode(b []byte) ([]byte, error) {
+func avroDecodeData(b []byte) ([]byte, error) {
 	if schemaCache != nil {
 		return schemaCache.DecodeMessage(b)
 	} else if avroCodec != nil {
 		return avro.DecodeWithCodec(b, avroCodec)
+	}
+	return b, nil
+}
+
+func avroDecodeKey(b []byte) ([]byte, error) {
+	if schemaCache != nil {
+		return schemaCache.DecodeMessage(b)
 	}
 	return b, nil
 }
